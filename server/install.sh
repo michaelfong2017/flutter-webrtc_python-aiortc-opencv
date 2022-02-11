@@ -1,4 +1,4 @@
-env_name="linux-env"
+env_name="venv"
 
 # For Mac M1, use miniconda3 and then python virtual environment.
 
