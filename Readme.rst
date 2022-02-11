@@ -6,6 +6,10 @@ This demo project should help you to get setup sending a video feed from a flutt
 Running the server
 ------------------
 
+MacOS
+
+    brew install ffmpeg opus libvpx pkg-config
+
 First install the required packages:
 
     $ cd server

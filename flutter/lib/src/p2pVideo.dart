@@ -86,7 +86,7 @@ class _P2PVideoState extends State<P2PVideo> {
           var request = http.Request(
             'POST',
             Uri.parse(
-                'http://192.168.0.1:8080/offer'), // CHANGE URL HERE TO LOCAL SERVER
+                'http://192.168.1.165:8080/offer'), // CHANGE URL HERE TO LOCAL SERVER
           );
           request.body = json.encode(
             {
