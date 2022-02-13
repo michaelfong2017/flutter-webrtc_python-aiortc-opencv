@@ -149,8 +149,8 @@ class _P2PVideoState extends State<P2PVideo> {
       'video': {
         'mandatory': {
           'minWidth':
-              '500', // Provide your own width, height and frame rate here
-          'minHeight': '500',
+              '1600', // Provide your own width, height and frame rate here
+          'minHeight': '1200',
           'minFrameRate': '30',
         },
         // 'facingMode': 'user',
@@ -225,12 +225,12 @@ class _P2PVideoState extends State<P2PVideo> {
                       // height: MediaQuery.of(context).size.width > 500
                       //     ? 500
                       //     : MediaQuery.of(context).size.width - 20,
-                      constraints: BoxConstraints(maxHeight: 500),
+                      constraints: BoxConstraints(maxHeight: 665),
                       // width: MediaQuery.of(context).size.width > 500
                       //     ? 500
                       //     : MediaQuery.of(context).size.width - 20,
                       child: AspectRatio(
-                        aspectRatio: 1,
+                        aspectRatio: 4/3,
                         child: Stack(
                           children: [
                             Positioned.fill(

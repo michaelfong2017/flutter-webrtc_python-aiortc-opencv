@@ -108,6 +108,9 @@ class VideoTransformTrack(MediaStreamTrack):
             logger.debug('{} {:.3f} sec'.format("detect", te-ts))
             ts = te
 
+            # Mirror image for selfie
+            img = cv2.flip(img, 1)
+
             # rebuild a VideoFrame, preserving timing information
             new_frame = VideoFrame.from_ndarray(img, format="bgr24")
             new_frame.pts = frame.pts
