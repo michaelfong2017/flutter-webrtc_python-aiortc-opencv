@@ -37,7 +37,7 @@ def timeit(method):
         result = method(*args, **kw)
         te = time.time()
         logger = logging.getLogger(method.__name__)
-        logger.error('{} {:.3f} sec'.format(method.__name__, te-ts))
+        logger.debug('{} {:.3f} sec'.format(method.__name__, te-ts))
         return result
 
     return timed

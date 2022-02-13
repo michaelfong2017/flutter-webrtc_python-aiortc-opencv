@@ -97,7 +97,7 @@ class VideoTransformTrack(MediaStreamTrack):
 
             img = frame.to_ndarray(format="bgr24")
             te = time.time()
-            logger.error('{} {:.3f} sec'.format("to_ndarray", te-ts))
+            logger.debug('{} {:.3f} sec'.format("to_ndarray", te-ts))
             ts = te
 
             self.detector.thread = threading.Thread(target=self.detector.detect, args=(img,))
@@ -105,7 +105,7 @@ class VideoTransformTrack(MediaStreamTrack):
             if self.detector.img is not None:
                 img = self.detector.img
             te = time.time()
-            logger.error('{} {:.3f} sec'.format("detect", te-ts))
+            logger.debug('{} {:.3f} sec'.format("detect", te-ts))
             ts = te
 
             # rebuild a VideoFrame, preserving timing information
@@ -113,7 +113,7 @@ class VideoTransformTrack(MediaStreamTrack):
             new_frame.pts = frame.pts
             new_frame.time_base = frame.time_base
             te = time.time()
-            logger.error('{} {:.3f} sec'.format("from_ndarray", te-ts))
+            logger.debug('{} {:.3f} sec'.format("from_ndarray", te-ts))
             ts = te
 
             return new_frame
