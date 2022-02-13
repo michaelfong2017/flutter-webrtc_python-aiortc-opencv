@@ -86,7 +86,7 @@ class _P2PVideoState extends State<P2PVideo> {
           var request = http.Request(
             'POST',
             Uri.parse(
-                'http://192.168.1.165:8080/offer'), // CHANGE URL HERE TO LOCAL SERVER
+                'http://34.205.72.200:8080/offer'), // CHANGE URL HERE TO LOCAL SERVER
           );
           request.body = json.encode(
             {
@@ -149,8 +149,8 @@ class _P2PVideoState extends State<P2PVideo> {
       'video': {
         'mandatory': {
           'minWidth':
-              '1600', // Provide your own width, height and frame rate here
-          'minHeight': '1200',
+              '1200', // Provide your own width, height and frame rate here
+          'minHeight': '1600',
           'minFrameRate': '30',
         },
         // 'facingMode': 'user',
@@ -225,12 +225,12 @@ class _P2PVideoState extends State<P2PVideo> {
                       // height: MediaQuery.of(context).size.width > 500
                       //     ? 500
                       //     : MediaQuery.of(context).size.width - 20,
-                      constraints: BoxConstraints(maxHeight: 665),
+                      constraints: BoxConstraints(maxHeight: 500),
                       // width: MediaQuery.of(context).size.width > 500
                       //     ? 500
                       //     : MediaQuery.of(context).size.width - 20,
                       child: AspectRatio(
-                        aspectRatio: 4/3,
+                        aspectRatio: 3/4,
                         child: Stack(
                           children: [
                             Positioned.fill(
