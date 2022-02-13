@@ -18,6 +18,7 @@ from aiortc import (
     RTCIceServer,
 )
 from aiortc.contrib.media import MediaBlackhole, MediaPlayer, MediaRecorder, MediaRelay
+from credentials import CREDENTIAL, USER
 
 from detector import *
 import time
@@ -149,8 +150,8 @@ async def offer(request):
             iceServers=[
                 RTCIceServer(
                     urls="turn:34.205.72.200:3478",
-                    username="CONFIG_HERE",
-                    credential="CONFIG_HERE",
+                    username=USER,
+                    credential=CREDENTIAL,
                 )
             ]
         )
