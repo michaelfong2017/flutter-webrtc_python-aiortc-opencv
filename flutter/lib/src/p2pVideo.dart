@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:flutterwebrtc/src/credentials.dart';
 import 'package:http/http.dart' as http;
 
 class P2PVideo extends StatefulWidget {
@@ -123,6 +123,13 @@ class _P2PVideoState extends State<P2PVideo> {
     });
     var configuration = <String, dynamic>{
       'sdpSemantics': 'unified-plan',
+      'iceServers': [
+        {
+          'url': 'turn:34.205.72.200:3478',
+          'username': USER,
+          'credential': CREDENTIAL
+        },
+      ]
     };
 
     //* Create Peer Connection
@@ -230,7 +237,7 @@ class _P2PVideoState extends State<P2PVideo> {
                       //     ? 500
                       //     : MediaQuery.of(context).size.width - 20,
                       child: AspectRatio(
-                        aspectRatio: 3/4,
+                        aspectRatio: 3 / 4,
                         child: Stack(
                           children: [
                             Positioned.fill(

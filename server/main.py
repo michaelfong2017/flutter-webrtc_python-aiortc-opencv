@@ -10,7 +10,13 @@ import cv2
 from aiohttp import web
 from av import VideoFrame
 import aiohttp_cors
-from aiortc import MediaStreamTrack, RTCPeerConnection, RTCSessionDescription
+from aiortc import (
+    MediaStreamTrack,
+    RTCPeerConnection,
+    RTCSessionDescription,
+    RTCConfiguration,
+    RTCIceServer,
+)
 from aiortc.contrib.media import MediaBlackhole, MediaPlayer, MediaRecorder, MediaRelay
 
 from detector import *
@@ -97,15 +103,17 @@ class VideoTransformTrack(MediaStreamTrack):
 
             img = frame.to_ndarray(format="bgr24")
             te = time.time()
-            logger.debug('{} {:.3f} sec'.format("to_ndarray", te-ts))
+            logger.debug("{} {:.3f} sec".format("to_ndarray", te - ts))
             ts = te
 
-            self.detector.thread = threading.Thread(target=self.detector.detect, args=(img,))
+            self.detector.thread = threading.Thread(
+                target=self.detector.detect, args=(img,)
+            )
             self.detector.thread.start()
             if self.detector.img is not None:
                 img = self.detector.img
             te = time.time()
-            logger.debug('{} {:.3f} sec'.format("detect", te-ts))
+            logger.debug("{} {:.3f} sec".format("detect", te - ts))
             ts = te
 
             # Mirror image for selfie
@@ -116,7 +124,7 @@ class VideoTransformTrack(MediaStreamTrack):
             new_frame.pts = frame.pts
             new_frame.time_base = frame.time_base
             te = time.time()
-            logger.debug('{} {:.3f} sec'.format("from_ndarray", te-ts))
+            logger.debug("{} {:.3f} sec".format("from_ndarray", te - ts))
             ts = te
 
             return new_frame
@@ -136,7 +144,17 @@ async def offer(request):
     params = await request.json()
     offer = RTCSessionDescription(sdp=params["sdp"], type=params["type"])
 
-    pc = RTCPeerConnection()
+    pc = RTCPeerConnection(
+        RTCConfiguration(
+            iceServers=[
+                RTCIceServer(
+                    urls="turn:34.205.72.200:3478",
+                    username="CONFIG_HERE",
+                    credential="CONFIG_HERE",
+                )
+            ]
+        )
+    )
     pc_id = "PeerConnection(%s)" % uuid.uuid4()
     pcs.add(pc)
 
@@ -255,8 +273,8 @@ if __name__ == "__main__":
 
     logging.basicConfig(
         level=level,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
 
     web.run_app(
