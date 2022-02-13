@@ -14,6 +14,8 @@ from aiortc import MediaStreamTrack, RTCPeerConnection, RTCSessionDescription
 from aiortc.contrib.media import MediaBlackhole, MediaPlayer, MediaRecorder, MediaRelay
 
 from detector import *
+import time
+import threading
 
 ROOT = os.path.dirname(__file__)
 
@@ -34,9 +36,7 @@ class VideoTransformTrack(MediaStreamTrack):
         self.track = track
         self.transform = transform
 
-        # Load SSD model
         self.detector = Detector()
-        ########
 
     async def recv(self):
         frame = await self.track.recv()
@@ -93,30 +93,29 @@ class VideoTransformTrack(MediaStreamTrack):
             new_frame.time_base = frame.time_base
             return new_frame
         else:
+            ts = time.time()
+
             img = frame.to_ndarray(format="bgr24")
+            te = time.time()
+            logger.error('{} {:.3f} sec'.format("to_ndarray", te-ts))
+            ts = te
 
-
-            blob = cv2.dnn.blobFromImage(img, 1/255.0, (inpWidth, inpHeight), [0, 0, 0], swapRB=False, crop=False)
-
-            net = self.detector.net
-            # Sets the input to the network
-            net.setInput(blob)
-
-            # Runs the forward pass to get output of the output layers
-            outs = net.forward(self.detector.getOutputsNames(net))
-            # Remove the bounding boxes with low confidence
-            self.detector.postprocess(img, outs)
-
-            # Put efficiency information. The function getPerfProfile returns the overall time for inference(t) and the timings for each of the layers(in layersTimes)
-            t, _ = net.getPerfProfile()
-            label = 'Inference time: %.2f ms' % (t * 1000.0 / cv.getTickFrequency())
-            cv.putText(img, label, (0, 15), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
-
+            self.detector.thread = threading.Thread(target=self.detector.detect, args=(img,))
+            self.detector.thread.start()
+            if self.detector.img is not None:
+                img = self.detector.img
+            te = time.time()
+            logger.error('{} {:.3f} sec'.format("detect", te-ts))
+            ts = te
 
             # rebuild a VideoFrame, preserving timing information
             new_frame = VideoFrame.from_ndarray(img, format="bgr24")
             new_frame.pts = frame.pts
             new_frame.time_base = frame.time_base
+            te = time.time()
+            logger.error('{} {:.3f} sec'.format("from_ndarray", te-ts))
+            ts = te
+
             return new_frame
 
 
