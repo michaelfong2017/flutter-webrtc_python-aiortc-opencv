@@ -16,4 +16,4 @@ RUN pip install -r requirements.txt
 
 ADD . /app
 
-ENTRYPOINT ["gunicorn", "main:app", "--bind", ":8080", "--worker-class", "aiohttp.GunicornWebWorker"]
+CMD ["python", "main.py", "-v"]

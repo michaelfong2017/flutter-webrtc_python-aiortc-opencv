@@ -19,7 +19,7 @@ import threading
 
 ROOT = os.path.dirname(__file__)
 
-logger = logging.getLogger("pc")
+logger = logging.getLogger()
 pcs = set()
 relay = MediaRelay()
 
@@ -243,15 +243,21 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.verbose:
-        logging.basicConfig(level=logging.DEBUG)
+        level = logging.DEBUG
     else:
-        logging.basicConfig(level=logging.INFO)
+        level = logging.INFO
 
     if args.cert_file:
         ssl_context = ssl.SSLContext()
         ssl_context.load_cert_chain(args.cert_file, args.key_file)
     else:
         ssl_context = None
+
+    logging.basicConfig(
+        level=level,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
 
     web.run_app(
         app, access_log=None, host=args.host, port=args.port, ssl_context=ssl_context
