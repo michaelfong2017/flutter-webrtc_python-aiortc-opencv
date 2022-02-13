@@ -156,8 +156,8 @@ class _P2PVideoState extends State<P2PVideo> {
       'video': {
         'mandatory': {
           'minWidth':
-              '1200', // Provide your own width, height and frame rate here
-          'minHeight': '1600',
+              '1600', // Provide your own width, height and frame rate here
+          'minHeight': '1200',
           'minFrameRate': '30',
         },
         // 'facingMode': 'user',
@@ -232,12 +232,12 @@ class _P2PVideoState extends State<P2PVideo> {
                       // height: MediaQuery.of(context).size.width > 500
                       //     ? 500
                       //     : MediaQuery.of(context).size.width - 20,
-                      constraints: BoxConstraints(maxHeight: 500),
+                      constraints: BoxConstraints(maxHeight: 640),
                       // width: MediaQuery.of(context).size.width > 500
                       //     ? 500
                       //     : MediaQuery.of(context).size.width - 20,
                       child: AspectRatio(
-                        aspectRatio: 3 / 4,
+                        aspectRatio: 4 / 3,
                         child: Stack(
                           children: [
                             Positioned.fill(
@@ -298,7 +298,7 @@ class _P2PVideoState extends State<P2PVideo> {
                                   transformType = value.toString();
                                 });
                               },
-                              items: ["none", "edges", "cartoon", "rotate"]
+                              items: ["none", "edges", "cartoon", "rotate", "object detection"]
                                   .map(
                                     (e) => DropdownMenuItem(
                                       value: e,

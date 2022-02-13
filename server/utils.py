@@ -8,7 +8,7 @@ def timeit(method):
         result = method(*args, **kw)
         te = time.time()
         logger = logging.getLogger()
-        logger.debug('{} {:.3f} sec'.format(method.__name__, te-ts))
+        logger.info('{} {:.3f} sec'.format(method.__name__, te-ts))
         return result
 
     return timed

@@ -22,13 +22,18 @@ class Detector:
         self.img = None
         self.is_processing = False
 
-    @timeit
     def detect(self, img):
         if self.is_processing:
             return
 
         self.is_processing = True
 
+        self._detect(img)
+
+        self.is_processing = False
+    
+    @timeit
+    def _detect(self, img):
         classes, confidences, boxes = self.net.detect(img, confThreshold=0.1, nmsThreshold=0.4)
         if len(confidences) > 0:
             for classId, confidence, box in zip(classes.flatten(), confidences.flatten(), boxes):
@@ -47,6 +52,3 @@ class Detector:
                 cv2.putText(img, label, (left, top), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255 - b, 255 - g, 255 - r))
 
         self.img = img
-
-        self.is_processing = False
-        # self.thread.stop()
