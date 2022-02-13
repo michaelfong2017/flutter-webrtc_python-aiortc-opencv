@@ -47,3 +47,4 @@ app.*.map.json
 
 # Me
 server/venv/
+server/.vscode

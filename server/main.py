@@ -13,6 +13,8 @@ import aiohttp_cors
 from aiortc import MediaStreamTrack, RTCPeerConnection, RTCSessionDescription
 from aiortc.contrib.media import MediaBlackhole, MediaPlayer, MediaRecorder, MediaRelay
 
+from detector import *
+
 ROOT = os.path.dirname(__file__)
 
 logger = logging.getLogger("pc")
@@ -31,6 +33,10 @@ class VideoTransformTrack(MediaStreamTrack):
         super().__init__()  # don't forget this!
         self.track = track
         self.transform = transform
+
+        # Load SSD model
+        self.detector = Detector()
+        ########
 
     async def recv(self):
         frame = await self.track.recv()
@@ -87,7 +93,31 @@ class VideoTransformTrack(MediaStreamTrack):
             new_frame.time_base = frame.time_base
             return new_frame
         else:
-            return frame
+            img = frame.to_ndarray(format="bgr24")
+
+
+            blob = cv2.dnn.blobFromImage(img, 1/255.0, (inpWidth, inpHeight), [0, 0, 0], swapRB=False, crop=False)
+
+            net = self.detector.net
+            # Sets the input to the network
+            net.setInput(blob)
+
+            # Runs the forward pass to get output of the output layers
+            outs = net.forward(self.detector.getOutputsNames(net))
+            # Remove the bounding boxes with low confidence
+            self.detector.postprocess(img, outs)
+
+            # Put efficiency information. The function getPerfProfile returns the overall time for inference(t) and the timings for each of the layers(in layersTimes)
+            t, _ = net.getPerfProfile()
+            label = 'Inference time: %.2f ms' % (t * 1000.0 / cv.getTickFrequency())
+            cv.putText(img, label, (0, 15), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
+
+
+            # rebuild a VideoFrame, preserving timing information
+            new_frame = VideoFrame.from_ndarray(img, format="bgr24")
+            new_frame.pts = frame.pts
+            new_frame.time_base = frame.time_base
+            return new_frame
 
 
 async def index(request):
@@ -181,14 +211,17 @@ app.router.add_get("/client.js", javascript)
 app.router.add_post("/offer", offer)
 
 for route in list(app.router.routes()):
-    cors.add(route, {
-        "*": aiohttp_cors.ResourceOptions(
-            allow_credentials=True,
-            expose_headers="*",
-            allow_headers="*",
-            allow_methods="*"
-        )
-    })
+    cors.add(
+        route,
+        {
+            "*": aiohttp_cors.ResourceOptions(
+                allow_credentials=True,
+                expose_headers="*",
+                allow_headers="*",
+                allow_methods="*",
+            )
+        },
+    )
 
 
 if __name__ == "__main__":
