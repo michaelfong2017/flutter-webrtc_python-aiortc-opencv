@@ -6,7 +6,6 @@ import os
 import ssl
 import uuid
 
-import numpy as np
 import cv2
 from aiohttp import web
 from av import VideoFrame
@@ -32,24 +31,6 @@ pcs = set()
 relay = MediaRelay()
 
 
-def useful_array(plane, bytes_per_pixel=1):
-    total_line_size = abs(plane.line_size)
-    useful_line_size = plane.width * bytes_per_pixel
-    arr = np.frombuffer(plane, np.uint8)
-    if total_line_size != useful_line_size:
-        arr = arr.reshape(-1, total_line_size)[:, 0:useful_line_size].reshape(-1)
-    return arr
-
-def yuv420p_to_bgr(frame):
-    arr = np.hstack((
-        useful_array(frame.planes[0]),
-        useful_array(frame.planes[1]),
-        useful_array(frame.planes[2])
-    )).reshape(-1, frame.width)
-    img = cv2.cvtColor(arr, cv2.COLOR_YUV420p2BGR)
-    return img
-
-
 class VideoTransformTrack(MediaStreamTrack):
     """
     A video stream track that transforms frames from an another track.
@@ -68,7 +49,7 @@ class VideoTransformTrack(MediaStreamTrack):
         frame = await self.track.recv()
 
         if self.transform == "cartoon":
-            img = yuv420p_to_bgr(frame)
+            img = frame.to_ndarray(format="bgr24")
 
             # prepare color
             img_color = cv2.pyrDown(cv2.pyrDown(img))
@@ -98,7 +79,7 @@ class VideoTransformTrack(MediaStreamTrack):
             return new_frame
         elif self.transform == "edges":
             # perform edge detection
-            img = yuv420p_to_bgr(frame)
+            img = frame.to_ndarray(format="bgr24")
             img = cv2.cvtColor(cv2.Canny(img, 100, 200), cv2.COLOR_GRAY2BGR)
 
             # rebuild a VideoFrame, preserving timing information
@@ -108,7 +89,7 @@ class VideoTransformTrack(MediaStreamTrack):
             return new_frame
         elif self.transform == "rotate":
             # rotate image
-            img = yuv420p_to_bgr(frame)
+            img = frame.to_ndarray(format="bgr24")
             rows, cols, _ = img.shape
             M = cv2.getRotationMatrix2D((cols / 2, rows / 2), frame.time * 45, 1)
             img = cv2.warpAffine(img, M, (cols, rows))
@@ -121,7 +102,7 @@ class VideoTransformTrack(MediaStreamTrack):
         elif self.transform == "object detection":
             ts = time.time()
 
-            img = yuv420p_to_bgr(frame)
+            img = frame.to_ndarray(format="bgr24")
             te = time.time()
             logger.debug("{} {:.3f} sec".format("to_ndarray", te - ts))
             ts = te
@@ -149,12 +130,6 @@ class VideoTransformTrack(MediaStreamTrack):
 
             return new_frame
         else:
-            # img = yuv420p_to_bgr(frame)
-
-            # rebuild a VideoFrame, preserving timing information
-            # new_frame = VideoFrame.from_ndarray(img, format="bgr24")
-            # new_frame.pts = frame.pts
-            # new_frame.time_base = frame.time_base
             return frame
 
 
