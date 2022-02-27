@@ -86,7 +86,7 @@ class _P2PVideoState extends State<P2PVideo> {
           var request = http.Request(
             'POST',
             Uri.parse(
-                'http://218.255.85.70:8080/offer'), // CHANGE URL HERE TO LOCAL SERVER
+                'http://16.162.122.227:8080/offer'), // CHANGE URL HERE TO LOCAL SERVER
           );
           request.body = json.encode(
             {
@@ -125,7 +125,7 @@ class _P2PVideoState extends State<P2PVideo> {
       'sdpSemantics': 'unified-plan',
       'iceServers': [
         {
-          'url': 'turn:218.255.85.70:3478',
+          'url': 'turn:16.162.122.227:3478',
           'username': USER,
           'credential': CREDENTIAL
         },
@@ -156,8 +156,8 @@ class _P2PVideoState extends State<P2PVideo> {
       'video': {
         'mandatory': {
           'minWidth':
-              '1200', // Provide your own width, height and frame rate here
-          'minHeight': '1600',
+              '1600', // Provide your own width, height and frame rate here
+          'minHeight': '1200',
           'minFrameRate': '30',
         },
         // 'facingMode': 'user',
@@ -232,12 +232,12 @@ class _P2PVideoState extends State<P2PVideo> {
                       // height: MediaQuery.of(context).size.width > 500
                       //     ? 500
                       //     : MediaQuery.of(context).size.width - 20,
-                      constraints: BoxConstraints(maxHeight: 500),
+                      constraints: BoxConstraints(maxHeight: 640),
                       // width: MediaQuery.of(context).size.width > 500
                       //     ? 500
                       //     : MediaQuery.of(context).size.width - 20,
                       child: AspectRatio(
-                        aspectRatio: 3 / 4,
+                        aspectRatio: 4 / 3,
                         child: Stack(
                           children: [
                             Positioned.fill(
