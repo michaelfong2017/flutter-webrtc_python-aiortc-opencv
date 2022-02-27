@@ -86,7 +86,7 @@ class _P2PVideoState extends State<P2PVideo> {
           var request = http.Request(
             'POST',
             Uri.parse(
-                'http://34.205.72.200:8080/offer'), // CHANGE URL HERE TO LOCAL SERVER
+                'http://218.255.85.70:8080/offer'), // CHANGE URL HERE TO LOCAL SERVER
           );
           request.body = json.encode(
             {
@@ -125,7 +125,7 @@ class _P2PVideoState extends State<P2PVideo> {
       'sdpSemantics': 'unified-plan',
       'iceServers': [
         {
-          'url': 'turn:34.205.72.200:3478',
+          'url': 'turn:218.255.85.70:3478',
           'username': USER,
           'credential': CREDENTIAL
         },

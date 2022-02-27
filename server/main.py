@@ -118,7 +118,7 @@ class VideoTransformTrack(MediaStreamTrack):
             ts = te
 
             # Mirror image for selfie
-            # img = cv2.flip(img, 1)
+            img = cv2.flip(img, 1)
 
             # rebuild a VideoFrame, preserving timing information
             new_frame = VideoFrame.from_ndarray(img, format="bgr24")
@@ -151,7 +151,7 @@ async def offer(request):
         RTCConfiguration(
             iceServers=[
                 RTCIceServer(
-                    urls="turn:34.205.72.200:3478",
+                    urls="turn:218.255.85.70:3478",
                     username=USER,
                     credential=CREDENTIAL,
                 )
