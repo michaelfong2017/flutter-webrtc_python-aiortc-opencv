@@ -151,7 +151,7 @@ async def offer(request):
         RTCConfiguration(
             iceServers=[
                 RTCIceServer(
-                    urls="turn:218.255.85.70:3478",
+                    urls="turn:16.162.122.227:3478",
                     username=USER,
                     credential=CREDENTIAL,
                 )
