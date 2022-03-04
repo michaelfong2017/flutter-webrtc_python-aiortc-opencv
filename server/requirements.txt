@@ -3,7 +3,6 @@ aioice==0.7.5
 aiortc==1.2.0
 av==8.0.3
 cryptography==3.4.7
-opencv-python==4.5.3.56
 gunicorn
 aiohttp_cors
 pandas
