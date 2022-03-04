@@ -12,6 +12,8 @@ class Detector:
     @timeit
     def __init__(self):
         self.net = cv2.dnn_DetectionModel(cfg, weights)
+        self.net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
+        self.net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
         self.net.setInputSize(416, 416)
         self.net.setInputScale(1.0 / 255)
         self.net.setInputSwapRB(True)
