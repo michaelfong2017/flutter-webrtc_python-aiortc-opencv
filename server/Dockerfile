@@ -1,4 +1,4 @@
-FROM python:3.9.10
+FROM michaelfong2017/tensorrt22.02-py3-opencv4.5.3:latest
 
 RUN apt update
 
