@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+from dataclasses import dataclass
 import json
 import logging
 import os
@@ -17,6 +18,7 @@ from aiortc import (
     RTCConfiguration,
     RTCIceServer,
 )
+from aioice import Candidate
 from aiortc.contrib.media import MediaBlackhole, MediaPlayer, MediaRecorder, MediaRelay
 from credentials import CREDENTIAL, USER
 
@@ -27,7 +29,7 @@ import threading
 ROOT = os.path.dirname(__file__)
 
 logger = logging.getLogger()
-pcs = set()
+pcs = {}
 relay = MediaRelay()
 
 
@@ -145,7 +147,7 @@ async def javascript(request):
 
 async def offer(request):
     params = await request.json()
-    offer = RTCSessionDescription(sdp=params["sdp"], type=params["type"])
+    offer = RTCSessionDescription(sdp=params["sdp"], type=params["type"].lower())
 
     pc = RTCPeerConnection(
         RTCConfiguration(
@@ -159,7 +161,7 @@ async def offer(request):
         )
     )
     pc_id = "PeerConnection(%s)" % uuid.uuid4()
-    pcs.add(pc)
+    pcs[pc_id] = pc
 
     def log_info(msg, *args):
         logger.info(pc_id + " " + msg, *args)
@@ -182,7 +184,7 @@ async def offer(request):
         log_info("Connection state is %s", pc.connectionState)
         if pc.connectionState == "failed":
             await pc.close()
-            pcs.discard(pc)
+            del pcs[pc_id]
 
     @pc.on("track")
     def on_track(track):
@@ -214,14 +216,47 @@ async def offer(request):
     return web.Response(
         content_type="application/json",
         text=json.dumps(
-            {"sdp": pc.localDescription.sdp, "type": pc.localDescription.type}
+            {"sdp": pc.localDescription.sdp, "type": pc.localDescription.type, "pc_id": pc_id}
+        ),
+    )
+
+
+@dataclass
+class IceCandidate(Candidate):
+    candidate: str = ""
+    sdpMid: str = ""
+    sdpMLineIndex: str = ""
+    ip: str = ""
+    relatedAddress: str = ""
+    relatedPort: int = -1
+    protocol: str = ""
+    tcpType: str = ""
+
+async def new_ice_candidate(request):
+    params = await request.json()
+    ice_candidate: IceCandidate = Candidate.from_sdp(params["candidate"])
+    ice_candidate.candidate = params["candidate"]
+    ice_candidate.sdpMid = params["sdpMid"]
+    ice_candidate.sdpMLineIndex = params["sdpMLineIndex"]
+    ice_candidate.ip = ice_candidate.host
+    ice_candidate.relatedAddress = ice_candidate.related_address
+    ice_candidate.relatedPort = ice_candidate.related_port
+    ice_candidate.protocol = ice_candidate.transport
+    ice_candidate.tcpType = ice_candidate.tcptype
+    pc_id = params["pc_id"]
+    # print(ice_candidate)
+    await pcs[pc_id].addIceCandidate(ice_candidate)
+    return web.Response(
+        content_type="application/json",
+        text=json.dumps(
+            {"pc_id": pc_id}
         ),
     )
 
 
 async def on_shutdown(app):
     # close peer connections
-    coros = [pc.close() for pc in pcs]
+    coros = [pc.close() for pc_id, pc in pcs.items()]
     await asyncio.gather(*coros)
     pcs.clear()
 
@@ -232,6 +267,7 @@ app.on_shutdown.append(on_shutdown)
 app.router.add_get("/", index)
 app.router.add_get("/client.js", javascript)
 app.router.add_post("/offer", offer)
+app.router.add_post("/new-ice-candidate", new_ice_candidate)
 
 for route in list(app.router.routes()):
     cors.add(
