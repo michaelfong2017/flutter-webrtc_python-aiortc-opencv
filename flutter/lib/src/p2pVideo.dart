@@ -129,6 +129,10 @@ class _P2PVideoState extends State<P2PVideo> {
     setState(() {
       _loading = true;
     });
+    /** Instruct server to return mirrored/unmirrored image */
+    _mirror = false;
+    _setMirror(_mirror);
+    /** */
     var configuration = <String, dynamic>{
       'sdpSemantics': 'unified-plan',
       // 'iceServers': [
@@ -164,8 +168,8 @@ class _P2PVideoState extends State<P2PVideo> {
       'video': {
         'mandatory': {
           'minWidth':
-              '1080', // Provide your own width, height and frame rate here
-          'minHeight': '1920',
+              '480', // Provide your own width, height and frame rate here
+          'minHeight': '720',
           'minFrameRate': '30',
         },
         // 'facingMode': 'user',
