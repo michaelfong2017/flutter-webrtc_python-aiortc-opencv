@@ -92,6 +92,7 @@ class _P2PVideoState extends State<P2PVideo> {
             {
               "sdp": des!.sdp,
               "type": des.type,
+              "mirror": "false",
               "video_transform": transformType,
             },
           );
@@ -156,8 +157,8 @@ class _P2PVideoState extends State<P2PVideo> {
       'video': {
         'mandatory': {
           'minWidth':
-              '1600', // Provide your own width, height and frame rate here
-          'minHeight': '1200',
+              '1200', // Provide your own width, height and frame rate here
+          'minHeight': '1600',
           'minFrameRate': '30',
         },
         // 'facingMode': 'user',
@@ -208,6 +209,32 @@ class _P2PVideoState extends State<P2PVideo> {
     await _localRenderer.initialize();
   }
 
+  void setTask(String task) async {
+    var headers = {
+      'Content-Type': 'application/json',
+    };
+    var request = http.Request(
+      'POST',
+      Uri.parse(
+          'http://16.163.180.160:8080/set-task'), // CHANGE URL HERE TO LOCAL SERVER
+    );
+    request.body = json.encode(
+      {
+        "task": task,
+      },
+    );
+    request.headers.addAll(headers);
+
+    http.StreamedResponse response = await request.send();
+    String data = "";
+    print(response);
+    if (response.statusCode == 200) {
+      data = await response.stream.bytesToString();
+      var dataMap = json.decode(data);
+      print(dataMap);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -232,12 +259,12 @@ class _P2PVideoState extends State<P2PVideo> {
                       // height: MediaQuery.of(context).size.width > 500
                       //     ? 500
                       //     : MediaQuery.of(context).size.width - 20,
-                      constraints: BoxConstraints(maxHeight: 640),
+                      constraints: BoxConstraints(maxHeight: 500),
                       // width: MediaQuery.of(context).size.width > 500
                       //     ? 500
                       //     : MediaQuery.of(context).size.width - 20,
                       child: AspectRatio(
-                        aspectRatio: 4 / 3,
+                        aspectRatio: 3 / 4,
                         child: Stack(
                           children: [
                             Positioned.fill(
@@ -297,6 +324,7 @@ class _P2PVideoState extends State<P2PVideo> {
                                 setState(() {
                                   transformType = value.toString();
                                 });
+                                setTask(value.toString());
                               },
                               items: ["none", "edges", "cartoon", "rotate", "object detection"]
                                   .map(

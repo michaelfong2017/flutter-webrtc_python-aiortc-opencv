@@ -26,6 +26,8 @@ from detector import *
 import time
 import threading
 
+from task_manager import TaskManager
+
 ROOT = os.path.dirname(__file__)
 
 logger = logging.getLogger()
@@ -40,17 +42,18 @@ class VideoTransformTrack(MediaStreamTrack):
 
     kind = "video"
 
-    def __init__(self, track, transform):
+    def __init__(self, track, mirror, task_manager):
         super().__init__()  # don't forget this!
         self.track = track
-        self.transform = transform
+        self.mirror = mirror
+        self.task_manager = task_manager
 
         self.detector = Detector()
 
     async def recv(self):
         frame = await self.track.recv()
 
-        if self.transform == "cartoon":
+        if self.task_manager.task == "cartoon":
             img = frame.to_ndarray(format="bgr24")
 
             # prepare color
@@ -72,36 +75,51 @@ class VideoTransformTrack(MediaStreamTrack):
             img_edges = cv2.cvtColor(img_edges, cv2.COLOR_GRAY2RGB)
 
             # combine color and edges
-            img = cv2.bitwise_and(img_color, img_edges)
+            try:
+                img = cv2.bitwise_and(img_color, img_edges)
+            except:
+                print("cartoon bitwise error")
+
+            # Mirror image for selfie
+            if self.mirror:
+                img = cv2.flip(img, 1)
 
             # rebuild a VideoFrame, preserving timing information
             new_frame = VideoFrame.from_ndarray(img, format="bgr24")
             new_frame.pts = frame.pts
             new_frame.time_base = frame.time_base
             return new_frame
-        elif self.transform == "edges":
+        elif self.task_manager.task == "edges":
             # perform edge detection
             img = frame.to_ndarray(format="bgr24")
             img = cv2.cvtColor(cv2.Canny(img, 100, 200), cv2.COLOR_GRAY2BGR)
 
+            # Mirror image for selfie
+            if self.mirror:
+                img = cv2.flip(img, 1)
+
             # rebuild a VideoFrame, preserving timing information
             new_frame = VideoFrame.from_ndarray(img, format="bgr24")
             new_frame.pts = frame.pts
             new_frame.time_base = frame.time_base
             return new_frame
-        elif self.transform == "rotate":
+        elif self.task_manager.task == "rotate":
             # rotate image
             img = frame.to_ndarray(format="bgr24")
             rows, cols, _ = img.shape
             M = cv2.getRotationMatrix2D((cols / 2, rows / 2), frame.time * 45, 1)
             img = cv2.warpAffine(img, M, (cols, rows))
 
+            # Mirror image for selfie
+            if self.mirror:
+                img = cv2.flip(img, 1)
+            
             # rebuild a VideoFrame, preserving timing information
             new_frame = VideoFrame.from_ndarray(img, format="bgr24")
             new_frame.pts = frame.pts
             new_frame.time_base = frame.time_base
             return new_frame
-        elif self.transform == "object detection":
+        elif self.task_manager.task == "object detection":
             ts = time.time()
 
             img = frame.to_ndarray(format="bgr24")
@@ -120,7 +138,8 @@ class VideoTransformTrack(MediaStreamTrack):
             ts = te
 
             # Mirror image for selfie
-            img = cv2.flip(img, 1)
+            if self.mirror:
+                img = cv2.flip(img, 1)
 
             # rebuild a VideoFrame, preserving timing information
             new_frame = VideoFrame.from_ndarray(img, format="bgr24")
@@ -132,7 +151,18 @@ class VideoTransformTrack(MediaStreamTrack):
 
             return new_frame
         else:
-            return frame
+            # perform edge detection
+            img = frame.to_ndarray(format="bgr24")
+            # Mirror image for selfie
+            if self.mirror:
+                img = cv2.flip(img, 1)
+
+            # rebuild a VideoFrame, preserving timing information
+            new_frame = VideoFrame.from_ndarray(img, format="bgr24")
+            new_frame.pts = frame.pts
+            new_frame.time_base = frame.time_base
+
+            return new_frame
 
 
 async def index(request):
@@ -196,7 +226,7 @@ async def offer(request):
         elif track.kind == "video":
             pc.addTrack(
                 VideoTransformTrack(
-                    relay.subscribe(track), transform=params["video_transform"]
+                    relay.subscribe(track), mirror=json.loads(params["mirror"].lower()), task_manager=TaskManager(params["video_transform"])
                 )
             )
 
@@ -254,6 +284,18 @@ async def new_ice_candidate(request):
     )
 
 
+async def set_task(request):
+    params = await request.json()
+    task_manager = TaskManager()
+    task_manager.set_task(params["task"])
+    return web.Response(
+        content_type="application/json",
+        text=json.dumps(
+            {"task_received": params["task"]}
+        ),
+    )
+
+
 async def on_shutdown(app):
     # close peer connections
     coros = [pc.close() for pc_id, pc in pcs.items()]
@@ -268,6 +310,7 @@ app.router.add_get("/", index)
 app.router.add_get("/client.js", javascript)
 app.router.add_post("/offer", offer)
 app.router.add_post("/new-ice-candidate", new_ice_candidate)
+app.router.add_post("/set-task", set_task)
 
 for route in list(app.router.routes()):
     cors.add(
