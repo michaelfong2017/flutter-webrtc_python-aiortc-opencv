@@ -30,6 +30,8 @@ class _P2PVideoState extends State<P2PVideo> {
 
   bool _loading = false;
 
+  bool _mirror = false;
+
   void _onTrack(RTCTrackEvent event) {
     print("TRACK EVENT: ${event.streams.map((e) => e.id)}, ${event.track.id}");
     if (event.track.kind == "video") {
@@ -65,6 +67,11 @@ class _P2PVideoState extends State<P2PVideo> {
   void _toggleCamera() async {
     if (_localStream == null) throw Exception('Stream is not initialized');
 
+    /** Instruct server to return mirrored/unmirrored image */
+    _mirror = !_mirror;
+    _setMirror(_mirror.toString());
+    /** */
+    
     final videoTrack = _localStream!
         .getVideoTracks()
         .firstWhere((track) => track.kind == 'video');
@@ -86,7 +93,7 @@ class _P2PVideoState extends State<P2PVideo> {
           var request = http.Request(
             'POST',
             Uri.parse(
-                'http://16.163.180.160:8080/offer'), // CHANGE URL HERE TO LOCAL SERVER
+                'http://192.168.1.252:8080/offer'), // CHANGE URL HERE TO LOCAL SERVER
           );
           request.body = json.encode(
             {
@@ -124,13 +131,13 @@ class _P2PVideoState extends State<P2PVideo> {
     });
     var configuration = <String, dynamic>{
       'sdpSemantics': 'unified-plan',
-      'iceServers': [
-        {
-          'url': 'turn:16.163.180.160:3478',
-          'username': USER,
-          'credential': CREDENTIAL
-        },
-      ]
+      // 'iceServers': [
+      //   {
+      //     'url': 'turn:16.163.180.160:3478',
+      //     'username': USER,
+      //     'credential': CREDENTIAL
+      //   },
+      // ]
     };
 
     //* Create Peer Connection
@@ -157,8 +164,8 @@ class _P2PVideoState extends State<P2PVideo> {
       'video': {
         'mandatory': {
           'minWidth':
-              '1200', // Provide your own width, height and frame rate here
-          'minHeight': '1600',
+              '1080', // Provide your own width, height and frame rate here
+          'minHeight': '1920',
           'minFrameRate': '30',
         },
         // 'facingMode': 'user',
@@ -209,14 +216,40 @@ class _P2PVideoState extends State<P2PVideo> {
     await _localRenderer.initialize();
   }
 
-  void setTask(String task) async {
+  void _setMirror(String mirror) async {
     var headers = {
       'Content-Type': 'application/json',
     };
     var request = http.Request(
       'POST',
       Uri.parse(
-          'http://16.163.180.160:8080/set-task'), // CHANGE URL HERE TO LOCAL SERVER
+          'http://192.168.1.252:8080/set-mirror'), // CHANGE URL HERE TO LOCAL SERVER
+    );
+    request.body = json.encode(
+      {
+        "mirror": mirror,
+      },
+    );
+    request.headers.addAll(headers);
+
+    http.StreamedResponse response = await request.send();
+    String data = "";
+    print(response);
+    if (response.statusCode == 200) {
+      data = await response.stream.bytesToString();
+      var dataMap = json.decode(data);
+      print(dataMap);
+    }
+  }
+
+  void _setTask(String task) async {
+    var headers = {
+      'Content-Type': 'application/json',
+    };
+    var request = http.Request(
+      'POST',
+      Uri.parse(
+          'http://192.168.1.252:8080/set-task'), // CHANGE URL HERE TO LOCAL SERVER
     );
     request.body = json.encode(
       {
@@ -324,7 +357,7 @@ class _P2PVideoState extends State<P2PVideo> {
                                 setState(() {
                                   transformType = value.toString();
                                 });
-                                setTask(value.toString());
+                                _setTask(value.toString());
                               },
                               items: ["none", "edges", "cartoon", "rotate", "object detection"]
                                   .map(
