@@ -3,7 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
-import 'package:flutterwebrtc/src/credentials.dart';
+// import 'package:flutterwebrtc/src/credentials.dart';
 import 'package:http/http.dart' as http;
 
 class P2PVideo extends StatefulWidget {
@@ -12,6 +12,8 @@ class P2PVideo extends StatefulWidget {
   @override
   _P2PVideoState createState() => _P2PVideoState();
 }
+
+bool _mirror = false;
 
 class _P2PVideoState extends State<P2PVideo> {
   RTCPeerConnection? _peerConnection;
@@ -29,8 +31,6 @@ class _P2PVideoState extends State<P2PVideo> {
   DateTime? _timeStart;
 
   bool _loading = false;
-
-  bool _mirror = false;
 
   void _onTrack(RTCTrackEvent event) {
     print("TRACK EVENT: ${event.streams.map((e) => e.id)}, ${event.track.id}");
@@ -69,7 +69,7 @@ class _P2PVideoState extends State<P2PVideo> {
 
     /** Instruct server to return mirrored/unmirrored image */
     _mirror = !_mirror;
-    _setMirror(_mirror.toString());
+    _setMirror(_mirror);
     /** */
     
     final videoTrack = _localStream!
@@ -216,7 +216,7 @@ class _P2PVideoState extends State<P2PVideo> {
     await _localRenderer.initialize();
   }
 
-  void _setMirror(String mirror) async {
+  void _setMirror(bool mirror) async {
     var headers = {
       'Content-Type': 'application/json',
     };
@@ -227,7 +227,7 @@ class _P2PVideoState extends State<P2PVideo> {
     );
     request.body = json.encode(
       {
-        "mirror": mirror,
+        "mirror": mirror.toString(),
       },
     );
     request.headers.addAll(headers);
